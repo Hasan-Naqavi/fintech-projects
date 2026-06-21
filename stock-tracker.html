@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stock Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#07100f;--surface:#0c1a18;--surface2:#102420;--border:#163830;--accent:#34d399;--accent2:#059669;--red:#f87171;--text:#e8faf4;--muted:#4d7a6e;--radius:14px}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;padding:24px}
+h1{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:4px}
+.subtitle{color:var(--muted);font-size:13px;margin-bottom:28px}
+.search-row{display:flex;gap:10px;margin-bottom:24px}
+.search-row input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:600;outline:none;transition:border-color .2s;text-transform:uppercase}
+.search-row input:focus{border-color:var(--accent)}
+.search-row input::placeholder{text-transform:none;font-weight:400;font-family:'Inter',sans-serif;font-size:14px}
+.btn{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:12px;padding:14px 24px;color:#000;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;transition:opacity .2s}
+.btn:hover{opacity:.88}
+.watchlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-bottom:28px}
+.stock-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;position:relative}
+.stock-ticker{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;margin-bottom:2px}
+.stock-name{font-size:11px;color:var(--muted);margin-bottom:14px}
+.stock-price{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;margin-bottom:4px}
+.stock-change{font-size:13px;font-weight:600}
+.up{color:var(--accent)}
+.down{color:var(--red)}
+.remove-btn{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;transition:color .2s}
+.remove-btn:hover{color:var(--red)}
+.chart-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px}
+.chart-title{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;margin-bottom:6px}
+.chart-subtitle{font-size:12px;color:var(--muted);margin-bottom:20px}
+.chart-wrap{position:relative;height:200px}
+canvas{width:100%!important;height:100%!important}
+.pills{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.pill{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);transition:all .2s}
+.pill.active{background:var(--accent);border-color:var(--accent);color:#000}
+.empty{text-align:center;color:var(--muted);font-size:13px;padding:40px;border:1px dashed var(--border);border-radius:var(--radius);margin-bottom:24px}
+.loader{text-align:center;color:var(--muted);font-size:13px;padding:20px}
+.popular{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+.pop-btn{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--text);cursor:pointer;transition:all .2s}
+.pop-btn:hover{border-color:var(--accent);color:var(--accent)}
+.tag{font-size:11px;color:var(--muted);margin-bottom:6px}
+</style>
+</head>
+<body>
+<h1>📈 Stock Tracker</h1>
+<p class="subtitle">Track your favourite stocks and watch price history</p>
+
+<div class="search-row">
+  <input type="text" id="tickerInput" placeholder="Enter ticker e.g. AAPL, TSLA, MSFT" maxlength="8"/>
+  <button class="btn" onclick="addStock()">+ Add</button>
+</div>
+
+<div class="tag">Popular stocks</div>
+<div class="popular">
+  <button class="pop-btn" onclick="quickAdd('AAPL')">🍎 AAPL</button>
+  <button class="pop-btn" onclick="quickAdd('TSLA')">⚡ TSLA</button>
+  <button class="pop-btn" onclick="quickAdd('MSFT')">🪟 MSFT</button>
+  <button class="pop-btn" onclick="quickAdd('GOOGL')">🔍 GOOGL</button>
+  <button class="pop-btn" onclick="quickAdd('AMZN')">📦 AMZN</button>
+  <button class="pop-btn" onclick="quickAdd('NVDA')">💚 NVDA</button>
+</div>
+
+<div id="watchlistEl"></div>
+
+<div class="chart-section">
+  <div class="chart-title">Price History</div>
+  <div class="chart-subtitle">Simulated 30-day price movement for selected stock</div>
+  <div class="pills">
+    <span class="pill active" onclick="setPeriod(7,this)">1W</span>
+    <span class="pill" onclick="setPeriod(14,this)">2W</span>
+    <span class="pill" onclick="setPeriod(30,this)">1M</span>
+    <span class="pill" onclick="setPeriod(90,this)">3M</span>
+  </div>
+  <div class="chart-wrap"><canvas id="chart"></canvas></div>
+</div>
+
+<script>
+// Simulated stock data — in a real app this would come from Yahoo Finance / Alpha Vantage API
+const STOCK_INFO = {
+  AAPL:{name:'Apple Inc.',price:189.50,change:+1.23},
+  TSLA:{name:'Tesla Inc.',price:248.73,change:-3.45},
+  MSFT:{name:'Microsoft Corp.',price:415.20,change:+2.10},
+  GOOGL:{name:'Alphabet Inc.',price:178.90,change:+0.87},
+  AMZN:{name:'Amazon.com Inc.',price:197.30,change:+1.56},
+  NVDA:{name:'NVIDIA Corp.',price:1089.40,change:+15.20},
+  META:{name:'Meta Platforms',price:512.60,change:-4.30},
+  JPM:{name:'JPMorgan Chase',price:198.40,change:+0.45},
+  HSBA:{name:'HSBC Holdings',price:7.82,change:+0.12},
+  BARC:{name:'Barclays PLC',price:2.34,change:-0.03},
+};
+
+let watchlist = JSON.parse(localStorage.getItem('stockWatchlist')||'[]');
+let chartPeriod = 7;
+let chartTicker = null;
+let chartInstance = null;
+
+function getStockData(ticker){
+  const base = STOCK_INFO[ticker.toUpperCase()];
+  if(base) return base;
+  // Generate plausible data for unknown tickers
+  const seed = ticker.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+  const price = 20 + (seed % 500);
+  const change = ((seed % 21) - 10) * 0.3;
+  return {name: ticker.toUpperCase()+' Corp.',price,change};
+}
+
+function generateHistory(ticker,days){
+  const info = getStockData(ticker);
+  const seed = ticker.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+  const prices = [];
+  let p = info.price * (1 - info.change/info.price * days/2 * 0.01);
+  for(let i=0;i<days;i++){
+    const rng = Math.sin(seed*i*0.3+i)*0.5+Math.sin(i*0.7)*0.3;
+    p = p * (1 + rng * 0.015);
+    prices.push(parseFloat(p.toFixed(2)));
+  }
+  prices[prices.length-1] = info.price;
+  return prices;
+}
+
+function renderWatchlist(){
+  const el = document.getElementById('watchlistEl');
+  if(!watchlist.length){
+    el.innerHTML='<div class="empty">No stocks added yet — search for a ticker above or click a popular stock</div>';
+    return;
+  }
+  el.innerHTML='<div class="watchlist">'+watchlist.map(ticker=>{
+    const d=getStockData(ticker);
+    const up=d.change>=0;
+    return`<div class="stock-card" onclick="drawChart('${ticker}')" style="cursor:pointer;border-color:${chartTicker===ticker?'var(--accent)':''}">
+      <button class="remove-btn" onclick="event.stopPropagation();removeStock('${ticker}')">×</button>
+      <div class="stock-ticker">${ticker}</div>
+      <div class="stock-name">${d.name}</div>
+      <div class="stock-price up">$${d.price.toFixed(2)}</div>
+      <div class="stock-change ${up?'up':'down'}">${up?'▲':'▼'} ${Math.abs(d.change).toFixed(2)} (${(d.change/d.price*100).toFixed(2)}%)</div>
+    </div>`;
+  }).join('')+'</div>';
+}
+
+function drawChart(ticker){
+  chartTicker=ticker;
+  const data=generateHistory(ticker,chartPeriod);
+  const labels=Array.from({length:chartPeriod},(_,i)=>{
+    const d=new Date();d.setDate(d.getDate()-chartPeriod+i+1);
+    return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  });
+  const up=data[data.length-1]>=data[0];
+  const color=up?'#34d399':'#f87171';
+  const canvas=document.getElementById('chart');
+  const ctx=canvas.getContext('2d');
+  // Simple canvas chart
+  canvas.width=canvas.offsetWidth*2;canvas.height=400;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const pad={t:20,r:20,b:40,l:60};
+  const W=canvas.width-pad.l-pad.r,H=canvas.height-pad.t-pad.b;
+  const min=Math.min(...data)*0.998,max=Math.max(...data)*1.002;
+  const xStep=W/(data.length-1);
+  const yScale=v=>(1-(v-min)/(max-min))*H+pad.t;
+  const xScale=i=>pad.l+i*xStep;
+  // Grid lines
+  ctx.strokeStyle='#1c2b2088';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=pad.t+H*(i/4);
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+W,y);ctx.stroke();
+    const val=max-(max-min)*(i/4);
+    ctx.fillStyle='#4d7a6e';ctx.font='20px Inter';ctx.textAlign='right';
+    ctx.fillText('$'+val.toFixed(2),pad.l-8,y+6);
+  }
+  // Fill
+  ctx.beginPath();ctx.moveTo(xScale(0),yScale(data[0]));
+  data.forEach((v,i)=>ctx.lineTo(xScale(i),yScale(v)));
+  ctx.lineTo(xScale(data.length-1),pad.t+H);ctx.lineTo(pad.l,pad.t+H);ctx.closePath();
+  const grad=ctx.createLinearGradient(0,pad.t,0,pad.t+H);
+  grad.addColorStop(0,color+'55');grad.addColorStop(1,color+'00');
+  ctx.fillStyle=grad;ctx.fill();
+  // Line
+  ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=3;ctx.lineJoin='round';
+  data.forEach((v,i)=>i===0?ctx.moveTo(xScale(i),yScale(v)):ctx.lineTo(xScale(i),yScale(v)));
+  ctx.stroke();
+  // X labels
+  ctx.fillStyle='#4d7a6e';ctx.font='18px Inter';ctx.textAlign='center';
+  const step=Math.max(1,Math.floor(data.length/5));
+  labels.forEach((l,i)=>{if(i%step===0)ctx.fillText(l,xScale(i),canvas.height-10);});
+  document.querySelector('.chart-title').textContent=`${ticker} Price History`;
+  renderWatchlist();
+}
+
+function setPeriod(days,el){
+  chartPeriod=days;
+  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  if(chartTicker)drawChart(chartTicker);
+}
+
+function addStock(){
+  const ticker=document.getElementById('tickerInput').value.trim().toUpperCase();
+  if(!ticker)return;
+  if(watchlist.includes(ticker)){alert('Already in watchlist');return;}
+  watchlist.push(ticker);
+  localStorage.setItem('stockWatchlist',JSON.stringify(watchlist));
+  document.getElementById('tickerInput').value='';
+  renderWatchlist();
+  drawChart(ticker);
+}
+
+function quickAdd(ticker){
+  if(!watchlist.includes(ticker)){watchlist.push(ticker);localStorage.setItem('stockWatchlist',JSON.stringify(watchlist));}
+  renderWatchlist();drawChart(ticker);
+}
+
+function removeStock(ticker){
+  watchlist=watchlist.filter(t=>t!==ticker);
+  localStorage.setItem('stockWatchlist',JSON.stringify(watchlist));
+  if(chartTicker===ticker){chartTicker=watchlist[0]||null;}
+  renderWatchlist();
+  if(chartTicker)drawChart(chartTicker);
+}
+
+renderWatchlist();
+if(watchlist.length)drawChart(watchlist[0]);
+else drawChart('AAPL');
+</script>
+</body>
+</html>

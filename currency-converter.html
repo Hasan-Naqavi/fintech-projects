@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Currency Converter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0f1e;
+      --surface: #111827;
+      --surface2: #1a2235;
+      --border: #1e2d45;
+      --accent: #4f8ef7;
+      --accent2: #7c6af7;
+      --text: #f0f4ff;
+      --muted: #6b7a99;
+      --success: #34d399;
+      --radius: 16px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+    }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .logo-text {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .logo-text span { color: var(--accent); }
+
+    .field-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    input[type="number"] {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      color: var(--text);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+
+    input[type="number"]:focus { border-color: var(--accent); }
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      min-width: 110px;
+    }
+
+    select:focus { border-color: var(--accent); }
+
+    .swap-btn {
+      width: 100%;
+      background: transparent;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 10px;
+      cursor: pointer;
+      margin: 4px 0 20px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .swap-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .result-box {
+      background: linear-gradient(135deg, rgba(79,142,247,0.08), rgba(124,106,247,0.08));
+      border: 1px solid rgba(79,142,247,0.2);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 20px;
+      min-height: 90px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .result-amount {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--success);
+      letter-spacing: -1px;
+      margin-bottom: 4px;
+    }
+
+    .result-label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .rate-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .rate-badge {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .convert-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none;
+      border-radius: 12px;
+      padding: 16px;
+      color: white;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      letter-spacing: 0.01em;
+    }
+
+    .convert-btn:hover { opacity: 0.9; }
+    .convert-btn:active { transform: scale(0.99); }
+    .convert-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .error { color: #f87171; font-size: 13px; margin-top: 12px; text-align: center; }
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 8px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    footer {
+      margin-top: 24px;
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo-row">
+    <div class="logo-icon">💱</div>
+    <div class="logo-text">Fx<span>Shift</span></div>
+  </div>
+
+  <div class="field-label">Amount</div>
+  <div class="input-row">
+    <input type="number" id="amount" value="100" min="0" step="any" />
+    <select id="fromCurrency"></select>
+  </div>
+
+  <button class="swap-btn" onclick="swapCurrencies()">⇅ Swap currencies</button>
+
+  <div class="field-label">Convert to</div>
+  <div class="input-row" style="margin-bottom:20px">
+    <select id="toCurrency" style="width:100%"></select>
+  </div>
+
+  <div class="result-box" id="resultBox">
+    <div class="result-amount" id="resultAmount">—</div>
+    <div class="result-label" id="resultLabel">Enter an amount and click Convert</div>
+  </div>
+
+  <div class="rate-row">
+    <span id="rateText">Live exchange rate</span>
+    <span class="rate-badge" id="rateValue">—</span>
+  </div>
+
+  <button class="convert-btn" id="convertBtn" onclick="convert()">Convert</button>
+  <div class="error" id="error"></div>
+</div>
+
+<footer>Rates via Open Exchange Rates API · Built with HTML, CSS & JavaScript</footer>
+
+<script>
+  const CURRENCIES = [
+    { code: 'GBP', name: 'British Pound', flag: '🇬🇧' },
+    { code: 'USD', name: 'US Dollar', flag: '🇺🇸' },
+    { code: 'EUR', name: 'Euro', flag: '🇪🇺' },
+    { code: 'AED', name: 'UAE Dirham', flag: '🇦🇪' },
+    { code: 'SAR', name: 'Saudi Riyal', flag: '🇸🇦' },
+    { code: 'PKR', name: 'Pakistani Rupee', flag: '🇵🇰' },
+    { code: 'JPY', name: 'Japanese Yen', flag: '🇯🇵' },
+    { code: 'INR', name: 'Indian Rupee', flag: '🇮🇳' },
+    { code: 'CAD', name: 'Canadian Dollar', flag: '🇨🇦' },
+    { code: 'AUD', name: 'Australian Dollar', flag: '🇦🇺' },
+    { code: 'CHF', name: 'Swiss Franc', flag: '🇨🇭' },
+    { code: 'CNY', name: 'Chinese Yuan', flag: '🇨🇳' },
+    { code: 'TRY', name: 'Turkish Lira', flag: '🇹🇷' },
+    { code: 'NGN', name: 'Nigerian Naira', flag: '🇳🇬' },
+    { code: 'ZAR', name: 'South African Rand', flag: '🇿🇦' },
+  ];
+
+  // Fallback rates relative to GBP (used if API fails)
+  const FALLBACK_RATES = {
+    GBP: 1, USD: 1.27, EUR: 1.17, AED: 4.66, SAR: 4.76,
+    PKR: 354, JPY: 197, INR: 106, CAD: 1.74, AUD: 1.96,
+    CHF: 1.13, CNY: 9.19, TRY: 43.5, NGN: 2030, ZAR: 23.5
+  };
+
+  let rates = {};
+
+  function populateSelects() {
+    const from = document.getElementById('fromCurrency');
+    const to = document.getElementById('toCurrency');
+    CURRENCIES.forEach(c => {
+      const opt1 = new Option(`${c.flag} ${c.code} — ${c.name}`, c.code);
+      const opt2 = new Option(`${c.flag} ${c.code} — ${c.name}`, c.code);
+      from.add(opt1);
+      to.add(opt2);
+    });
+    from.value = 'GBP';
+    to.value = 'USD';
+  }
+
+  async function fetchRates() {
+    try {
+      // Free API — no key needed, based on USD
+      const res = await fetch('https://api.frankfurter.app/latest?from=USD');
+      if (!res.ok) throw new Error('API error');
+      const data = await res.json();
+      // Add USD itself
+      data.rates['USD'] = 1;
+      rates = data.rates;
+    } catch {
+      // Use fallback rates
+      rates = FALLBACK_RATES;
+    }
+  }
+
+  function getRate(from, to) {
+    // Convert via USD or GBP as base
+    if (rates['USD']) {
+      // API uses USD as base
+      const fromRate = from === 'USD' ? 1 : rates[from];
+      const toRate = to === 'USD' ? 1 : rates[to];
+      if (!fromRate || !toRate) return null;
+      return toRate / fromRate;
+    } else {
+      // Fallback uses GBP as base
+      const fromRate = rates[from];
+      const toRate = rates[to];
+      if (!fromRate || !toRate) return null;
+      return toRate / fromRate;
+    }
+  }
+
+  async function convert() {
+    const btn = document.getElementById('convertBtn');
+    const errorEl = document.getElementById('error');
+    const resultAmount = document.getElementById('resultAmount');
+    const resultLabel = document.getElementById('resultLabel');
+    const rateValue = document.getElementById('rateValue');
+
+    errorEl.textContent = '';
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Converting...';
+
+    const amount = parseFloat(document.getElementById('amount').value);
+    const from = document.getElementById('fromCurrency').value;
+    const to = document.getElementById('toCurrency').value;
+
+    if (isNaN(amount) || amount <= 0) {
+      errorEl.textContent = 'Please enter a valid amount greater than 0.';
+      btn.disabled = false;
+      btn.textContent = 'Convert';
+      return;
+    }
+
+    if (Object.keys(rates).length === 0) await fetchRates();
+
+    const rate = getRate(from, to);
+    if (!rate) {
+      errorEl.textContent = 'Could not get exchange rate. Please try again.';
+      btn.disabled = false;
+      btn.textContent = 'Convert';
+      return;
+    }
+
+    const converted = (amount * rate).toFixed(2);
+    const formattedAmount = new Intl.NumberFormat('en-GB').format(amount);
+    const formattedResult = new Intl.NumberFormat('en-GB').format(converted);
+
+    resultAmount.textContent = `${formattedResult} ${to}`;
+    resultLabel.textContent = `${formattedAmount} ${from} at today's rate`;
+    rateValue.textContent = `1 ${from} = ${rate.toFixed(4)} ${to}`;
+
+    btn.disabled = false;
+    btn.textContent = 'Convert';
+  }
+
+  function swapCurrencies() {
+    const from = document.getElementById('fromCurrency');
+    const to = document.getElementById('toCurrency');
+    const tmp = from.value;
+    from.value = to.value;
+    to.value = tmp;
+  }
+
+  populateSelects();
+  fetchRates();
+</script>
+</body>
+</html>

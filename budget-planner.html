@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Budget Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d0a1e;--surface:#13102a;--surface2:#1a1735;--border:#242040;--accent:#a78bfa;--accent2:#7c3aed;--green:#34d399;--red:#f87171;--yellow:#fbbf24;--text:#ede9fe;--muted:#6b5e8a;--radius:14px}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;padding:24px}
+h1{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:4px}
+.subtitle{color:var(--muted);font-size:13px;margin-bottom:28px}
+.top-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:24px}
+@media(max-width:560px){.top-grid{grid-template-columns:1fr}}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.stat-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.stat-value{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-1px}
+.progress-ring{width:100%;background:var(--surface2);border-radius:99px;height:8px;margin-top:10px;overflow:hidden}
+.progress-fill{height:100%;border-radius:99px;transition:width .5s}
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.layout{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px}
+.card-title{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;margin-bottom:18px}
+label{font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em}
+input,select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:border-color .2s;margin-bottom:12px}
+input:focus,select:focus{border-color:var(--accent)}
+.btn{width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;padding:13px;color:#fff;font-weight:600;font-family:'Inter',sans-serif;font-size:14px;cursor:pointer;transition:opacity .2s}
+.btn:hover{opacity:.88}
+.budget-rows{display:flex;flex-direction:column;gap:14px}
+.brow{background:var(--surface2);border-radius:12px;padding:14px 16px}
+.brow-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.brow-name{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.brow-amounts{font-size:12px;color:var(--muted)}
+.brow-amounts span{font-weight:600}
+.brow-bar{height:7px;background:var(--border);border-radius:99px;overflow:hidden}
+.brow-fill{height:100%;border-radius:99px;transition:width .4s}
+.over{color:var(--red)!important}
+.del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;transition:color .2s}
+.del:hover{color:var(--red)}
+.empty{text-align:center;color:var(--muted);font-size:13px;padding:32px 0}
+.month-row{display:flex;align-items:center;gap:10px;margin-bottom:24px}
+.month-row select{margin:0;flex:1}
+.month-label{font-size:13px;font-weight:600;white-space:nowrap;color:var(--muted)}
+</style>
+</head>
+<body>
+<h1>📊 Budget Planner</h1>
+<p class="subtitle">Set category budgets and track how much you're spending</p>
+
+<div class="month-row">
+  <span class="month-label">Month:</span>
+  <select id="monthSel" onchange="render()" style="max-width:180px"></select>
+</div>
+
+<div class="top-grid">
+  <div class="stat-card">
+    <div class="stat-label">Total Budget</div>
+    <div class="stat-value" id="totalBudget" style="color:var(--accent)">£0</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Spent</div>
+    <div class="stat-value" id="totalSpent" style="color:var(--yellow)">£0</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Remaining</div>
+    <div class="stat-value" id="totalLeft">£0</div>
+    <div class="progress-ring"><div class="progress-fill" id="overallBar" style="background:var(--green)"></div></div>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="card">
+    <div class="card-title">Add Budget Category</div>
+    <label>Category Name</label>
+    <select id="catName">
+      <option>🏠 Rent / Mortgage</option>
+      <option>🍔 Food & Groceries</option>
+      <option>🚌 Transport</option>
+      <option>🎮 Entertainment</option>
+      <option>👗 Shopping & Clothing</option>
+      <option>💊 Health & Fitness</option>
+      <option>📚 Education</option>
+      <option>💡 Bills & Utilities</option>
+      <option>✈️ Travel & Holidays</option>
+      <option>💸 Savings</option>
+      <option>🍕 Eating Out</option>
+      <option>📱 Subscriptions</option>
+    </select>
+    <label>Monthly Budget (£)</label>
+    <input type="number" id="budgetAmt" placeholder="e.g. 300" min="0"/>
+    <label>Amount Spent So Far (£)</label>
+    <input type="number" id="spentAmt" placeholder="e.g. 120" min="0"/>
+    <button class="btn" onclick="addCategory()">Add Category</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Budget Breakdown</div>
+    <div class="budget-rows" id="budgetRows"><div class="empty">No categories yet — add one to get started</div></div>
+  </div>
+</div>
+
+<script>
+let data = JSON.parse(localStorage.getItem('budgetData')||'{}');
+// data structure: { "June 2026": [{name, budget, spent}] }
+
+function currentMonth(){return document.getElementById('monthSel').value}
+
+function populateMonths(){
+  const sel=document.getElementById('monthSel');
+  const months=[];
+  const now=new Date();
+  for(let i=-1;i<=4;i++){
+    const d=new Date(now.getFullYear(),now.getMonth()+i,1);
+    months.push(d.toLocaleDateString('en-GB',{month:'long',year:'numeric'}));
+  }
+  sel.innerHTML=months.map(m=>`<option${m===months[1]?' selected':''}>${m}</option>`).join('');
+}
+
+function getCategories(){return data[currentMonth()]||[]}
+function saveCategories(cats){data[currentMonth()]=cats;localStorage.setItem('budgetData',JSON.stringify(data));}
+
+function fmt(n){return'£'+parseFloat(n||0).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}
+
+function render(){
+  const cats=getCategories();
+  const totalB=cats.reduce((a,c)=>a+c.budget,0);
+  const totalS=cats.reduce((a,c)=>a+c.spent,0);
+  const left=totalB-totalS;
+  const pct=totalB?Math.min(totalS/totalB*100,100):0;
+  document.getElementById('totalBudget').textContent=fmt(totalB);
+  document.getElementById('totalSpent').textContent=fmt(totalS);
+  const leftEl=document.getElementById('totalLeft');
+  leftEl.textContent=fmt(Math.abs(left));
+  leftEl.style.color=left>=0?'var(--green)':'var(--red)';
+  const bar=document.getElementById('overallBar');
+  bar.style.width=pct+'%';
+  bar.style.background=pct<70?'var(--green)':pct<90?'var(--yellow)':'var(--red)';
+
+  const rows=document.getElementById('budgetRows');
+  if(!cats.length){rows.innerHTML='<div class="empty">No categories yet</div>';return;}
+  rows.innerHTML=cats.map((c,i)=>{
+    const pct2=c.budget?Math.min(c.spent/c.budget*100,100):0;
+    const over=c.spent>c.budget;
+    const col=pct2<70?'#34d399':pct2<90?'#fbbf24':'#f87171';
+    return`<div class="brow">
+      <div class="brow-top">
+        <div class="brow-name">${c.name}</div>
+        <button class="del" onclick="deleteCategory(${i})">×</button>
+      </div>
+      <div class="brow-amounts ${over?'over':''}">Spent <span>${fmt(c.spent)}</span> of <span>${fmt(c.budget)}</span>${over?' — OVER BUDGET':''}</div>
+      <div style="margin-top:8px" class="brow-bar"><div class="brow-fill" style="width:${pct2}%;background:${col}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function addCategory(){
+  const name=document.getElementById('catName').value;
+  const budget=parseFloat(document.getElementById('budgetAmt').value)||0;
+  const spent=parseFloat(document.getElementById('spentAmt').value)||0;
+  if(!budget){alert('Please enter a budget amount.');return;}
+  const cats=getCategories();
+  cats.push({name,budget,spent});
+  saveCategories(cats);
+  document.getElementById('budgetAmt').value='';
+  document.getElementById('spentAmt').value='';
+  render();
+}
+
+function deleteCategory(i){
+  const cats=getCategories();cats.splice(i,1);saveCategories(cats);render();
+}
+
+populateMonths();render();
+</script>
+</body>
+</html>

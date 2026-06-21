@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Loan Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0e0a;--surface:#101610;--surface2:#161e16;--border:#1e2e1e;--accent:#4ade80;--accent2:#16a34a;--blue:#60a5fa;--red:#f87171;--yellow:#fbbf24;--text:#ecfdf0;--muted:#4d7a54;--radius:14px}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;padding:24px;display:flex;flex-direction:column;align-items:center}
+.wrap{width:100%;max-width:700px}
+h1{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:4px}
+.subtitle{color:var(--muted);font-size:13px;margin-bottom:28px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;margin-bottom:16px}
+.card-title{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;margin-bottom:20px}
+.slider-group{margin-bottom:22px}
+label{font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em}
+.slider-row{display:flex;align-items:center;gap:14px}
+input[type=range]{flex:1;-webkit-appearance:none;height:6px;border-radius:99px;background:var(--surface2);border:none;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg)}
+.val-badge{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;white-space:nowrap;min-width:90px;text-align:center;color:var(--accent)}
+.tabs{display:flex;gap:8px;margin-bottom:20px}
+.tab{flex:1;padding:10px;text-align:center;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);color:var(--muted);background:var(--surface2);transition:all .2s}
+.tab.active{background:var(--accent);color:#000;border-color:var(--accent)}
+.results-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+@media(max-width:480px){.results-grid{grid-template-columns:1fr 1fr}}
+.result-box{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center}
+.result-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.result-value{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700}
+.schedule-wrap{max-height:280px;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface)}
+td{padding:9px 10px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+.principal-col{color:var(--blue)}
+.interest-col{color:var(--yellow)}
+.balance-col{color:var(--muted)}
+.donut-wrap{display:flex;align-items:center;justify-content:center;gap:28px;flex-wrap:wrap;margin-bottom:4px}
+svg{overflow:visible}
+.legend{display:flex;flex-direction:column;gap:10px}
+.legend-item{display:flex;align-items:center;gap:8px;font-size:13px}
+.legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🏦 Loan Calculator</h1>
+<p class="subtitle">Calculate monthly repayments, total interest, and see your full repayment schedule</p>
+
+<div class="card">
+  <div class="card-title">Loan Details</div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="setType('personal',this)">Personal Loan</div>
+    <div class="tab" onclick="setType('mortgage',this)">Mortgage</div>
+    <div class="tab" onclick="setType('car',this)">Car Loan</div>
+    <div class="tab" onclick="setType('student',this)">Student Loan</div>
+  </div>
+
+  <div class="slider-group">
+    <label>Loan Amount</label>
+    <div class="slider-row">
+      <input type="range" id="principal" min="1000" max="500000" step="1000" value="10000" oninput="update()"/>
+      <span class="val-badge" id="principalVal">£10,000</span>
+    </div>
+  </div>
+
+  <div class="slider-group">
+    <label>Annual Interest Rate</label>
+    <div class="slider-row">
+      <input type="range" id="rate" min="0.5" max="30" step="0.1" value="6.5" oninput="update()"/>
+      <span class="val-badge" id="rateVal">6.5%</span>
+    </div>
+  </div>
+
+  <div class="slider-group">
+    <label>Loan Term</label>
+    <div class="slider-row">
+      <input type="range" id="term" min="1" max="30" step="1" value="5" oninput="update()"/>
+      <span class="val-badge" id="termVal">5 yrs</span>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">Results</div>
+  <div class="results-grid">
+    <div class="result-box"><div class="result-label">Monthly Payment</div><div class="result-value" id="monthly" style="color:var(--accent)">—</div></div>
+    <div class="result-box"><div class="result-label">Total Repayment</div><div class="result-value" id="total" style="color:var(--blue)">—</div></div>
+    <div class="result-box"><div class="result-label">Total Interest</div><div class="result-value" id="interest" style="color:var(--yellow)">—</div></div>
+  </div>
+  <div class="donut-wrap">
+    <svg id="donut" width="140" height="140" viewBox="0 0 140 140"></svg>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div><span id="legendPrincipal">Principal</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div><span id="legendInterest">Interest</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">Repayment Schedule</div>
+  <div class="schedule-wrap">
+    <table>
+      <thead><tr><th>Year</th><th class="principal-col">Principal</th><th class="interest-col">Interest</th><th class="balance-col">Balance</th></tr></thead>
+      <tbody id="schedule"></tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+<script>
+const PRESETS={
+  personal:{principal:10000,rate:6.5,term:5},
+  mortgage:{principal:250000,rate:4.5,term:25},
+  car:{principal:15000,rate:8.9,term:4},
+  student:{principal:50000,rate:5.4,term:10}
+};
+
+function setType(type,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const p=PRESETS[type];
+  document.getElementById('principal').value=p.principal;
+  document.getElementById('rate').value=p.rate;
+  document.getElementById('term').value=p.term;
+  update();
+}
+
+function fmt(n){return'£'+Math.round(n).toLocaleString('en-GB')}
+function fmtD(n){return'£'+n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',')}
+
+function drawDonut(principal,interest){
+  const total=principal+interest;
+  const pPct=principal/total;
+  const svg=document.getElementById('donut');
+  const cx=70,cy=70,r=55,sw=22;
+  const circ=2*Math.PI*r;
+  const pLen=circ*pPct;
+  const iLen=circ*(1-pPct);
+  svg.innerHTML=`
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#1e2e1e" stroke-width="${sw}"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#60a5fa" stroke-width="${sw}" stroke-dasharray="${pLen} ${circ-pLen}" stroke-dashoffset="${circ/4}" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#fbbf24" stroke-width="${sw}" stroke-dasharray="${iLen} ${circ-iLen}" stroke-dashoffset="${circ/4-pLen}" stroke-linecap="round"/>
+    <text x="${cx}" y="${cy-6}" text-anchor="middle" font-family="Space Grotesk" font-size="11" fill="#4d7a54">INTEREST</text>
+    <text x="${cx}" y="${cy+10}" text-anchor="middle" font-family="Space Grotesk" font-size="16" font-weight="700" fill="#fbbf24">${(100-pPct*100).toFixed(0)}%</text>`;
+}
+
+function update(){
+  const P=parseFloat(document.getElementById('principal').value);
+  const annRate=parseFloat(document.getElementById('rate').value);
+  const years=parseInt(document.getElementById('term').value);
+  document.getElementById('principalVal').textContent=fmt(P);
+  document.getElementById('rateVal').textContent=annRate.toFixed(1)+'%';
+  document.getElementById('termVal').textContent=years+' yr'+(years>1?'s':'');
+  const r=annRate/100/12;
+  const n=years*12;
+  let monthly;
+  if(r===0){monthly=P/n;}
+  else{monthly=P*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1);}
+  const totalPay=monthly*n;
+  const totalInt=totalPay-P;
+  document.getElementById('monthly').textContent=fmtD(monthly);
+  document.getElementById('total').textContent=fmt(totalPay);
+  document.getElementById('interest').textContent=fmt(totalInt);
+  document.getElementById('legendPrincipal').textContent=`Principal: ${fmt(P)}`;
+  document.getElementById('legendInterest').textContent=`Interest: ${fmt(totalInt)}`;
+  drawDonut(P,totalInt);
+  // Yearly schedule
+  let balance=P;
+  let tbody='';
+  for(let y=1;y<=years;y++){
+    let yearPrincipal=0,yearInterest=0;
+    for(let m=0;m<12;m++){
+      const intPayment=balance*r;
+      const princPayment=monthly-intPayment;
+      yearInterest+=intPayment;
+      yearPrincipal+=princPayment;
+      balance-=princPayment;
+    }
+    tbody+=`<tr><td>Year ${y}</td><td class="principal-col">${fmt(yearPrincipal)}</td><td class="interest-col">${fmt(yearInterest)}</td><td class="balance-col">${fmt(Math.max(0,balance))}</td></tr>`;
+  }
+  document.getElementById('schedule').innerHTML=tbody;
+}
+
+update();
+</script>
+</body>
+</html>
